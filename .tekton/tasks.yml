@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup-task
+spec:
+  description: Task for cleaning up temporary files and artifacts
+  steps:
+  - name: cleanup
+    image: alpine:latest
+    command:
+    - /bin/sh
+    - -c
+    - |
+      echo "Starting cleanup process..."
+      rm -rf /tmp/*
+      rm -rf /workspace/temp/*
+      echo "Cleanup completed successfully"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose-tests-task
+spec:
+  description: Task for running nose tests
+  steps:
+  - name: install-dependencies
+    image: python:3.9
+    command:
+    - /bin/sh
+    - -c
+    - |
+      echo "Installing dependencies..."
+      pip install nose coverage
+      if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      echo "Dependencies installed"
+      
+  - name: run-nose-tests
+    image: python:3.9
+    command:
+    - /bin/sh
+    - -c
+    - |
+      echo "Running nose tests..."
+      nosetests --with-coverage --cover-package=. --cover-erase --cover-branches --cover-xml --cover-html
+      echo "Nose tests completed"
